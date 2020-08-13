@@ -16,22 +16,41 @@ read_pairs = demuxed
 genome_ref = file(params.genome_file)
 genome_ref_dir = genome_ref.parent
 genome_ref_fname = genome_ref.getName()
+
 process mapping {
     publishDir "${params.results_dir}/${sample_id}/", mode: 'copy', overwrite: true
-
+    
     input:
     set val(sample_id), file(read1), file(read2) from read_pairs
     file genome_ref_dir
     
     output:
-    set sample_id, file('alignment.bam') into bam_files
+    set sample_id, file('alignment.sam') into sam_files
 
     script:
     """
     echo "${sample_id}"
-    bwa mem -M -t 24 ${genome_ref_dir}/${genome_ref_fname} ${read1} ${read2} | samtools view -Sb - > alignment.bam
+    bwa mem -M -t 24 ${genome_ref_dir}/${genome_ref_fname} ${read1} ${read2} > alignment.sam
     """
 }
+
+
+process bamsorter {
+    publishDir "${params.results_dir}/${sample_id}/", mode: 'copy', overwrite: true
+    
+    input:
+    set val(sample_id), file(samfile) from sam_files
+    
+    output:
+    set sample_id, file('alignment.bam') into sorted_bam_files
+
+    script:
+    """
+    echo "${sample_id}"
+    samtools view -S -b ${samfile} -o "alignment.bam"
+    """
+}
+
 
 /**
  * @return gets sample_name
