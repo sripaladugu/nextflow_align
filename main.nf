@@ -46,7 +46,7 @@ process bamsorter {
     script:
     """
     echo "${sample_id}"
-    samtools view -S -b ${samfile} -o "${sample_id}_sorted_aln.bam"
+    samtools sort ${samfile} > "${sample_id}_sorted_aln.bam"
     """
 }
 
@@ -57,12 +57,12 @@ process bamindexer {
     set val(sample_id), file(sorted_bamfile) from sorted_bam_files
     
     output:
-    set sample_id, file('${sample_id}_sorted_aln.bam.bai') into sorted_bam_files
+    set sample_id, file("${sample_id}_sorted_aln.bam.bai") into indexed_bam_files
 
     script:
     """
     echo "${sample_id}"
-    samtools view -S -b ${samfile} -o "${sample_id}_sorted_aln.bam.bai"
+    samtools index ${sorted_bamfile} "${sample_id}_sorted_aln.bam.bai"
     """
 }
 
