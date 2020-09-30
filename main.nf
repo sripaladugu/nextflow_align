@@ -25,15 +25,14 @@ process mapping {
     file genome_ref_dir
     
     output:
-    set sample_id, file('alignment.sam') into sam_files
+    set sample_id, file("${sample_id}_aln.sam") into sam_files
 
     script:
     """
     echo "${sample_id}"
-    bwa mem -M -t 24 ${genome_ref_dir}/${genome_ref_fname} ${read1} ${read2} > alignment.sam
+    bwa mem -M -t 24 ${genome_ref_dir}/${genome_ref_fname} ${read1} ${read2} > ${sample_id}_aln.sam 
     """
 }
-
 
 process bamsorter {
     publishDir "${params.results_dir}/${sample_id}/", mode: 'copy', overwrite: true
@@ -42,15 +41,30 @@ process bamsorter {
     set val(sample_id), file(samfile) from sam_files
     
     output:
-    set sample_id, file('alignment.bam') into sorted_bam_files
+    set sample_id, file("${sample_id}_sorted_aln.bam") into sorted_bam_files
 
     script:
     """
     echo "${sample_id}"
-    samtools view -S -b ${samfile} -o "alignment.bam"
+    samtools view -S -b ${samfile} -o "${sample_id}_sorted_aln.bam"
     """
 }
 
+process bamindexer {
+    publishDir "${params.results_dir}/${sample_id}/", mode: 'copy', overwrite: true
+    
+    input:
+    set val(sample_id), file(sorted_bamfile) from sorted_bam_files
+    
+    output:
+    set sample_id, file('${sample_id}_sorted_aln.bam.bai') into sorted_bam_files
+
+    script:
+    """
+    echo "${sample_id}"
+    samtools view -S -b ${samfile} -o "${sample_id}_sorted_aln.bam.bai"
+    """
+}
 
 /**
  * @return gets sample_name
