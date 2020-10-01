@@ -46,7 +46,9 @@ process bamsorter {
     script:
     """
     echo "${sample_id}"
-    samtools sort ${samfile} > "${sample_id}_sorted_aln.bam"
+    picard -Xmx16g AddOrReplaceReadGroups \
+           INPUT=${samfile} OUTPUT=${sample_id}_sorted_aln.bam SORT_ORDER=coordinate \
+           RGID=${sample_id}-id RGLB=${sample_id}-lib RGPL=ILLUMINA RGPU=${sample_id}-01 RGSM=${sample_id}
     """
 }
 
